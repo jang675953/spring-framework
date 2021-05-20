@@ -243,6 +243,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * not for actual use
 	 * @return an instance of the bean
 	 * @throws BeansException if the bean could not be created
+	 * 实际执行创建bean逻辑
 	 */
 	@SuppressWarnings("unchecked")
 	protected <T> T doGetBean(
@@ -252,8 +253,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
+		//检查单例缓存中是否有手动注册的单例
 		// Eagerly check singleton cache for manually registered singletons.
 		Object sharedInstance = getSingleton(beanName);
+
+		//如果缓存过
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
@@ -266,7 +270,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 			beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
-
+		//如果没有缓存过
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
@@ -327,11 +331,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						}
 					}
 				}
-
+				//如果作用域是单例
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					//根据对象工厂创建单例对象
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							//调用子类创建bean对象
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {
@@ -344,20 +350,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					});
 					beanInstance = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
-
+				//如果作用域是原型
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
+						//设置当前线程变量中正在创建的bean的名称
 						beforePrototypeCreation(beanName);
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
+
+						//清除当前线程变量中正在创建的bean的名称
 						afterPrototypeCreation(beanName);
 					}
+					//调用当前类或子类方法获取bean实例
 					beanInstance = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
-
+				//如果作用域是其他
 				else {
 					String scopeName = mbd.getScope();
 					if (!StringUtils.hasLength(scopeName)) {
@@ -369,11 +379,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					}
 					try {
 						Object scopedInstance = scope.get(beanName, () -> {
+							//设置当前线程变量中正在创建的bean的名称
 							beforePrototypeCreation(beanName);
 							try {
 								return createBean(beanName, mbd, args);
 							}
 							finally {
+								//清除当前线程变量中正在创建的bean的名称
 								afterPrototypeCreation(beanName);
 							}
 						});
@@ -1871,6 +1883,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			mbd.isFactoryBean = true;
 		}
 		else {
+			//获取缓存的工厂bean
 			object = getCachedObjectForFactoryBean(beanName);
 		}
 		if (object == null) {
@@ -1881,6 +1894,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				mbd = getMergedLocalBeanDefinition(beanName);
 			}
 			boolean synthetic = (mbd != null && mbd.isSynthetic());
+			//从工厂bean获取bean实例
 			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
 		}
 		return object;

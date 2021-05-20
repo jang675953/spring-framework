@@ -66,8 +66,10 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 */
 	public AnnotationConfigApplicationContext() {
 		StartupStep createAnnotatedBeanDefReader = this.getApplicationStartup().start("spring.context.annotated-bean-reader.create");
+		//创建带注解bean定义阅读器
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		createAnnotatedBeanDefReader.end();
+		//创建类路径bean定义扫描器
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 
@@ -88,8 +90,12 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	 * {@link Configuration @Configuration} classes
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
+		//调用父类方法创建DefaultListableBeanFactory
+		//调用当前类方法创建带注解bean定义阅读器、类路径Bean定义扫描器
 		this();
+		//调用父类方法注册bean
 		register(componentClasses);
+		//调用父类方法刷新上下文
 		refresh();
 	}
 
@@ -165,6 +171,7 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		Assert.notEmpty(componentClasses, "At least one component class must be specified");
 		StartupStep registerComponentClass = this.getApplicationStartup().start("spring.context.component-classes.register")
 				.tag("classes", () -> Arrays.toString(componentClasses));
+		//调用beanDefinitionReader注册bean
 		this.reader.register(componentClasses);
 		registerComponentClass.end();
 	}

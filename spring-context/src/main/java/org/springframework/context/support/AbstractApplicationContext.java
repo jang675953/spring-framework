@@ -545,10 +545,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			StartupStep contextRefresh = this.applicationStartup.start("spring.context.refresh");
-
+			//准备Context
 			// Prepare this context for refreshing.
 			prepareRefresh();
 
+			//子类实现
 			// Tell the subclass to refresh the internal bean factory.
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
@@ -563,6 +564,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Invoke factory processors registered as beans in the context.
 				invokeBeanFactoryPostProcessors(beanFactory);
 
+				//注册所有BeanPostProcessor
 				// Register bean processors that intercept bean creation.
 				registerBeanPostProcessors(beanFactory);
 				beanPostProcess.end();
@@ -573,12 +575,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Initialize event multicaster for this context.
 				initApplicationEventMulticaster();
 
+				//子类实现
 				// Initialize other special beans in specific context subclasses.
 				onRefresh();
 
 				// Check for listener beans and register them.
 				registerListeners();
 
+				//实例化所有非懒加载单例
 				// Instantiate all remaining (non-lazy-init) singletons.
 				finishBeanFactoryInitialization(beanFactory);
 

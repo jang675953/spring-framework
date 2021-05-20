@@ -52,6 +52,9 @@ public class AnnotatedBeanDefinitionReader {
 
 	private BeanNameGenerator beanNameGenerator = AnnotationBeanNameGenerator.INSTANCE;
 
+	/**
+	 * 创建注解bean作用域元数据解析器
+	 **/
 	private ScopeMetadataResolver scopeMetadataResolver = new AnnotationScopeMetadataResolver();
 
 	private ConditionEvaluator conditionEvaluator;
@@ -144,6 +147,7 @@ public class AnnotatedBeanDefinitionReader {
 	 * @param beanClass the class of the bean
 	 */
 	public void registerBean(Class<?> beanClass) {
+		//实际执行注册bean的逻辑
 		doRegisterBean(beanClass, null, null, null, null);
 	}
 
@@ -256,10 +260,12 @@ public class AnnotatedBeanDefinitionReader {
 		}
 
 		abd.setInstanceSupplier(supplier);
+		//获取bean作用域元数据
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
 
+		//处理公共定义注解，如Lazy、Primary、DependsOn、Role、Description
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
@@ -274,14 +280,19 @@ public class AnnotatedBeanDefinitionReader {
 				}
 			}
 		}
+		//判断是否有bean定义定制器
 		if (customizers != null) {
 			for (BeanDefinitionCustomizer customizer : customizers) {
 				customizer.customize(abd);
 			}
 		}
-
+		//创建Bean定义持有人
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+
+		//应用作用域代理模式
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+
+		//将bean定义添加到beanDefinitionMap中
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 

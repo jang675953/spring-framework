@@ -94,13 +94,16 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
 	 */
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
+		//bean工厂是单例且singletonObjects包含要获取的bean
 		if (factory.isSingleton() && containsSingleton(beanName)) {
 			synchronized (getSingletonMutex()) {
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				if (object == null) {
+					//从工厂中获取bean
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
+					//从FactoryBeans创建的单例对象的缓存集合中获取
 					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
 					if (alreadyThere != null) {
 						object = alreadyThere;
@@ -111,8 +114,10 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 								// Temporarily return non-post-processed object, not storing it yet..
 								return object;
 							}
+							//设置当前线程变量中正在创建的单例bean
 							beforeSingletonCreation(beanName);
 							try {
+								//调用当前类或者子类方法执行后置处理（当前类无处理）
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
 							catch (Throwable ex) {
@@ -120,10 +125,12 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 										"Post-processing of FactoryBean's singleton object failed", ex);
 							}
 							finally {
+								//清楚当前线程变量中正在创建的单例bean
 								afterSingletonCreation(beanName);
 							}
 						}
 						if (containsSingleton(beanName)) {
+							//添加到FactoryBeans创建的单例对象的缓存集合中
 							this.factoryBeanObjectCache.put(beanName, object);
 						}
 					}
@@ -131,6 +138,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				return object;
 			}
 		}
+		///bean工厂不是单例或者singletonObjects不包含要获取的bean
 		else {
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			if (shouldPostProcess) {
@@ -154,6 +162,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
 	 */
 	private Object doGetObjectFromFactoryBean(FactoryBean<?> factory, String beanName) throws BeanCreationException {
+		//调用FactoryBean::getObject获取bean
 		Object object;
 		try {
 			if (System.getSecurityManager() != null) {
