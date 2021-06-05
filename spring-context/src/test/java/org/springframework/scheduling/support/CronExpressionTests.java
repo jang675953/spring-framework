@@ -51,6 +51,16 @@ class CronExpressionTests {
 		}
 	};
 
+	@Test
+	public void isValidExpression() {
+		assertThat(CronExpression.isValidExpression(null)).isFalse();
+		assertThat(CronExpression.isValidExpression("")).isFalse();
+		assertThat(CronExpression.isValidExpression("*")).isFalse();
+		assertThat(CronExpression.isValidExpression("* * * * *")).isFalse();
+		assertThat(CronExpression.isValidExpression("* * * * * * *")).isFalse();
+
+		assertThat(CronExpression.isValidExpression("* * * * * *")).isTrue();
+	}
 
 	@Test
 	void matchAll() {
@@ -495,6 +505,29 @@ class CronExpressionTests {
 		assertThat(actual).isNotNull();
 		assertThat(actual.getDayOfWeek()).isEqualTo(FRIDAY);
 		assertThat(actual.getDayOfMonth()).isEqualTo(13);
+	}
+
+	@Test
+	public void everyTenDays() {
+		CronExpression cronExpression = CronExpression.parse("0 15 12 */10 1-8 5");
+
+		LocalDateTime last = LocalDateTime.parse("2021-04-30T12:14:59");
+		LocalDateTime expected = LocalDateTime.parse("2021-05-21T12:15");
+		LocalDateTime actual = cronExpression.next(last);
+		assertThat(actual).isNotNull();
+		assertThat(actual).isEqualTo(expected);
+
+		last = actual;
+		expected = LocalDateTime.parse("2021-06-11T12:15");
+		actual = cronExpression.next(last);
+		assertThat(actual).isNotNull();
+		assertThat(actual).isEqualTo(expected);
+
+		last = actual;
+		expected = LocalDateTime.parse("2022-01-21T12:15");
+		actual = cronExpression.next(last);
+		assertThat(actual).isNotNull();
+		assertThat(actual).isEqualTo(expected);
 	}
 
 	@Test
